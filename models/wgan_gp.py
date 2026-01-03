@@ -106,8 +106,8 @@ class WGANGP:
         """
         self.optimizer_G.zero_grad()
         
-        # 生成假图像
-        batch_size = 64  # 可以从配置中获取
+        # 从配置中获取批次大小
+        batch_size = self.config['training']['batch_size']
         z = torch.randn(batch_size, self.latent_dim, device=self.device)
         fake_images = self.generator(z)
         

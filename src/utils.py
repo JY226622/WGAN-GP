@@ -72,12 +72,11 @@ class AnimeDataset(Dataset):
         self.image_size = image_size
         
         # 获取所有图像文件
-        self.image_files = []
-        for ext in ['*.jpg', '*.jpeg', '*.png', '*.bmp']:
-            self.image_files.extend(
-                [f for f in os.listdir(root_dir) 
-                 if f.lower().endswith(ext[1:])]
-            )
+        valid_extensions = {'.jpg', '.jpeg', '.png', '.bmp'}
+        self.image_files = [
+            f for f in os.listdir(root_dir)
+            if os.path.splitext(f)[1].lower() in valid_extensions
+        ]
         
         # 默认变换
         if transform is None:

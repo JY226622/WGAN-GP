@@ -187,12 +187,14 @@ def main():
     
     # 根据模式执行生成
     if args.mode == 'generate' or args.mode == 'all':
+        # 获取保存格式，如果config中没有则使用默认值
+        save_format = config.get('generation', {}).get('save_format', 'png')
         generate_images(
             model, 
             args.num_images, 
             args.batch_size, 
             args.output,
-            save_format=config['generation']['save_format']
+            save_format=save_format
         )
     
     if args.mode == 'interpolate' or args.mode == 'all':

@@ -106,22 +106,24 @@ def calculate_inception_score(features, splits=10):
     """
     计算Inception Score
     
+    注意：这是一个简化的实现。完整的IS计算需要使用Inception-v3的
+    分类输出（1000个类别的softmax概率）。
+    
     Args:
-        features: 特征或概率分布
+        features: Inception-v3的池化层特征（不是分类概率）
         splits: 分割数量
         
     Returns:
-        is_mean: IS均值
+        is_mean: IS均值（注意：此实现仅作演示，结果可能不准确）
         is_std: IS标准差
     """
-    # 如果是特征，需要通过softmax获取概率
-    if features.ndim == 2 and features.shape[1] != 1000:
-        # 假设这是特征，我们需要一个分类器
-        # 这里简化处理，实际应该使用完整的Inception模型
-        print("警告: 简化的IS计算，可能不准确")
-        probs = features / features.sum(axis=1, keepdims=True)
-    else:
-        probs = features
+    # 警告：这是简化实现
+    print("警告: 这是简化的IS计算实现，结果仅供参考。")
+    print("完整的IS计算需要使用Inception-v3的分类输出。")
+    
+    # 归一化特征作为伪概率（仅用于演示）
+    # 实际应该使用softmax分类概率
+    probs = np.abs(features) / (np.abs(features).sum(axis=1, keepdims=True) + 1e-10)
     
     # 分割计算
     split_scores = []

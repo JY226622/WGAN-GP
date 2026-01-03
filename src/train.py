@@ -53,6 +53,7 @@ def train_one_epoch(model, dataloader, epoch, writer, config):
         wd_meter.update(wd)
         
         # 每n_critic步训练一次生成器
+        g_loss = 0.0  # 初始化默认值
         if batch_idx % config['training']['n_critic'] == 0:
             g_loss = model.train_generator()
             g_loss_meter.update(g_loss)
@@ -178,9 +179,10 @@ def main():
             model.save_checkpoint(checkpoint_path, epoch, d_loss, g_loss)
             print(f"  ✓ 检查点已保存: {checkpoint_path}")
         
-        # 保存最佳模型（基于Wasserstein距离）
-        if abs(wd) < best_wd:
-            best_wd = abs(wd)
+        # 保存最佳模型（基于Wasserstein距离的绝对值）
+        # 注意：使用绝对值因为我们希望距离接近0
+        if abs(wd) < abs(best_wd):
+            best_wd = wd
             best_path = os.path.join(checkpoint_dir, 'best_model.pth')
             model.save_checkpoint(best_path, epoch, d_loss, g_loss)
             print(f"  ✓ 最佳模型已更新 (WD: {wd:.4f})")
