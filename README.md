@@ -18,11 +18,11 @@
 
 ## 项目结构
 -项目根目录
--├─ dataset          # 数据集目录
--│  └─ faces         # 数据集（96×96×3）
--├─ src              # 源码目录
-  - ├─ models            # 模型子目录
-  - ├─ output            # 生成结果输出目录
-  - ├─ discriminator.py  # 判别器网络实现
-  - ├─ generator.py      # 生成器网络实现
-  - └─ main.py           # 训练/测试主程序
+ -├─ dataset          # 数据集目录
+ -│  └─ faces         # 数据集（96×96×3）
+ -├─ src              # 源码目录
+   - ├─ models            # 模型子目录
+   - ├─ output            # 生成结果输出目录
+   - ├─ discriminator.py  # 判别器网络实现
+   - ├─ generator.py      # 生成器网络实现
+   - └─ main.py           # 训练/测试主程序
