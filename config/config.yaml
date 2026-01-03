@@ -1,0 +1,70 @@
+# WGAN-GP 训练配置文件
+
+# 数据设置
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  generated_dir: "data/generated"
+  image_size: 64  # 图像尺寸 (64x64)
+  image_channels: 3  # RGB图像
+  num_workers: 4  # 数据加载线程数
+
+# 模型架构
+model:
+  latent_dim: 128  # 潜在空间维度
+  feature_maps_g: 64  # 生成器特征图基数
+  feature_maps_d: 64  # 判别器特征图基数
+  use_batch_norm: true  # 是否使用批归一化
+  use_spectral_norm: false  # 是否使用谱归一化
+
+# 训练参数
+training:
+  batch_size: 64
+  num_epochs: 200
+  n_critic: 5  # 每训练1次生成器，训练5次判别器
+  
+  # 优化器设置
+  optimizer:
+    lr_g: 0.0001  # 生成器学习率
+    lr_d: 0.0001  # 判别器学习率
+    beta1: 0.0  # Adam优化器参数
+    beta2: 0.9  # Adam优化器参数
+  
+  # WGAN-GP特定参数
+  wgan_gp:
+    lambda_gp: 10  # 梯度惩罚系数
+    
+  # 学习率调度
+  scheduler:
+    use_scheduler: false
+    step_size: 50
+    gamma: 0.5
+
+# 日志和检查点
+logging:
+  log_interval: 100  # 每100批次打印一次日志
+  save_interval: 10  # 每10个epoch保存一次模型
+  checkpoint_dir: "checkpoints/saved_models"
+  tensorboard_dir: "runs"
+  generate_samples: true  # 训练时是否生成样本图片
+  num_sample_images: 64  # 生成的样本图片数量
+
+# 生成设置
+generation:
+  num_images: 1000  # 生成图片数量
+  batch_size: 128  # 生成批次大小
+  save_format: "png"  # 保存格式
+
+# 评估设置
+evaluation:
+  fid_batch_size: 50  # FID评估批次大小
+  is_splits: 10  # IS评估分割数
+  metrics:
+    - fid  # Fréchet Inception Distance
+    - is   # Inception Score
+
+# 设备设置
+device:
+  use_cuda: true  # 是否使用GPU
+  gpu_ids: [0]  # 使用的GPU编号
+  seed: 42  # 随机种子
