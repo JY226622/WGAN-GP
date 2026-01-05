@@ -23,6 +23,6 @@
 - ├─ src              # 源码目录
    - ├─ models            # 模型子目录
    - ├─ output            # 生成结果输出目录
-   - ├─ discriminator.py  # 判别器网络实现
+   - ├─ critic.py         # 判别器网络实现
    - ├─ generator.py      # 生成器网络实现
    - └─ main.py           # 训练/测试主程序
