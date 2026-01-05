@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-# ====================== Generator模型（微调，移除无关逻辑）======================
+# ====================== Generator======================
 class Generator(nn.Module):
     def __init__(self, latent_dim=100, img_size=96, channels=3):
         super(Generator, self).__init__()

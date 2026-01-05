@@ -10,15 +10,15 @@ from torchvision.utils import save_image
 from tqdm import tqdm
 from PIL import Image
 import glob
-from generator import Generator  # 导入生成器模型
-from discriminator import Discriminator  # 导入判别器模型
-# ====================== 全局配置（适配WGAN-GP）======================
+from generator import Generator
+from critic import Critic
+# ====================== 全局配置======================
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-# WGAN-GP超参数（调整原有DCGAN参数，适配WGAN-GP特性）
-batch_size = 128 # WGAN-GP显存消耗更高，适当降低批次大小（原256）
-lr = 0.0001  # WGAN-GP推荐学习率（原0.0002）
-beta1 = 0.0  # WGAN-GP不使用beta1=0.5，推荐设为0（Adam优化器）
+
+batch_size = 128
+lr = 0.0001
+beta1 = 0.0
 beta2 = 0.999
 num_epochs = 50
 latent_dim = 100
@@ -27,7 +27,7 @@ channels = 3
 sample_interval = 100
 save_model_interval = 5
 critic_iterations = 5  # WGAN-GP核心：Critic（判别器）训练5步，生成器训练1步
-lambda_gp = 10  # 梯度惩罚系数（WGAN-GP固定推荐值10）
+lambda_gp = 10  # 梯度惩罚系数
 
 dataset_path = r'D:\AApython\Anime-WGAN-main\dataset'
 output_path = './output'
@@ -36,7 +36,7 @@ model_path = './models'
 os.makedirs(output_path, exist_ok=True)
 os.makedirs(model_path, exist_ok=True)
 
-# 数据变换（保持原有，无需修改）
+
 transform = transforms.Compose([
     transforms.Resize(img_size),
     transforms.CenterCrop(img_size),
@@ -86,13 +86,12 @@ def train_model():
 
     # 初始化生成器和Critic（判别器）
     generator = Generator(latent_dim=latent_dim, img_size=img_size, channels=channels).to(device)
-    discriminator = Discriminator(img_size=img_size, channels=channels).to(device)  # 此处仍沿用变量名，实际是Critic
+    critic = Critic(img_size=img_size, channels=channels).to(device)
 
-    # WGAN-GP：优化器修改（移除BCELoss，使用RMSprop或Adam，此处用Adam，beta1=0.0）
     optimizer_G = optim.Adam(generator.parameters(), lr=lr, betas=(beta1, beta2))
-    optimizer_D = optim.Adam(discriminator.parameters(), lr=lr, betas=(beta1, beta2))  # Critic优化器
+    optimizer_D = optim.Adam(critic.parameters(), lr=lr, betas=(beta1, beta2))
 
-    # 固定噪声（观察训练变化）
+    # 固定噪声
     fixed_noise = torch.randn(16, latent_dim, 1, 1).to(device)
 
     # 训练循环
@@ -114,14 +113,14 @@ def train_model():
                 fake_imgs = generator(z)
 
                 # 计算Critic对真实图片和假图片的分数
-                real_score = discriminator(imgs)
-                fake_score = discriminator(fake_imgs.detach())
+                real_score = critic(imgs)
+                fake_score = critic(fake_imgs.detach())
 
                 # 计算Critic损失（WGAN损失：-E[C(x_real)] + E[C(x_fake)]）
                 d_loss = -torch.mean(real_score) + torch.mean(fake_score)
 
                 # 计算梯度惩罚并加入总损失
-                gp = compute_gradient_penalty(discriminator, imgs, fake_imgs, device)
+                gp = compute_gradient_penalty(critic, imgs, fake_imgs, device)
                 d_loss_total = d_loss + gp
 
                 # 反向传播更新Critic
@@ -135,7 +134,7 @@ def train_model():
 
             # 生成假图片并计算Critic分数
             fake_imgs = generator(z)
-            fake_score = discriminator(fake_imgs)
+            fake_score = critic(fake_imgs)
 
             # 生成器损失（WGAN损失：-E[C(G(z))]）
             g_loss = -torch.mean(fake_score)
@@ -158,17 +157,17 @@ def train_model():
         # 保存模型
         if (epoch + 1) % save_model_interval == 0:
             torch.save(generator.state_dict(), os.path.join(model_path, f"generator_epoch_{epoch + 1}.pth"))
-            torch.save(discriminator.state_dict(), os.path.join(model_path, f"critic_epoch_{epoch + 1}.pth"))  # 重命名为Critic
+            torch.save(critic.state_dict(), os.path.join(model_path, f"critic_epoch_{epoch + 1}.pth"))  # 重命名为Critic
 
     # 保存最终模型
     torch.save(generator.state_dict(), os.path.join(model_path, "generator_final.pth"))
-    torch.save(discriminator.state_dict(), os.path.join(model_path, "critic_final.pth"))
+    torch.save(critic.state_dict(), os.path.join(model_path, "critic_final.pth"))
     print("WGAN-GP训练完成！最终模型已保存至 ./models 目录")
 
-# ====================== 模式2：加载模型生成图片函数（无需大幅修改）=====================
+# ====================== 模式2：加载模型生成图片函数 =====================
 def generate_anime_images(num_images=16, pretrained_model_path=None):
     """
-    加载WGAN-GP预训练生成器模型，生成二次元图片（分开保存）
+    加载WGAN-GP预训练生成器模型，生成二次元图片
     """
     if pretrained_model_path is None:  # 如果用户没有指定预训练模型路径
         pretrained_model_path = os.path.join(model_path, "generator_final.pth")  # 使用默认路径
@@ -191,14 +190,14 @@ def generate_anime_images(num_images=16, pretrained_model_path=None):
     with torch.no_grad():  # 禁用梯度计算，加快推理速度
         fake_imgs = gen(z).detach().cpu()  # 生成图片并将结果从GPU移到CPU
 
-    # 保存图片（分开保存）
+    # 保存图片
     os.makedirs(output_path, exist_ok=True)  # 确保输出目录存在
     for i in range(num_images):
         img_path = os.path.join(output_path, f"generated_{i}.png")  # 每张图单独路径
         save_image(fake_imgs[i], img_path, normalize=True)  # 保存单张图片
         print(f"生成的图片已保存到：{img_path}")  # 打印保存信息
 
-# ====================== 主程序：模式选择交互（保持原有逻辑）=====================
+# ====================== 主程序：模式选择交互 =====================
 if __name__ == '__main__':
     print("=" * 50)
     print("WGAN-GP 二次元头像生成工具")
